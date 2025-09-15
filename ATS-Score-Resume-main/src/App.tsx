@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './components/layout/Header';
 import { Home } from './pages/Home';
 import { ResumeUpload } from './components/upload/ResumeUpload';
 import { JDInput } from './components/upload/JDInput';
-import { ScoreCard } from './components/analyze/ScoreCard';
-import { AnalysisResults } from './components/analyze/AnalysisResults';
 import { useAnalysis } from './hooks/useAnalysis';
 import { ResumeData, JobDescription } from './types';
+
+// Lazy load analysis components
+const ScoreCard = lazy(() => import('./components/analyze/ScoreCard').then(module => ({ default: module.ScoreCard })));
+const AnalysisResults = lazy(() => import('./components/analyze/AnalysisResults').then(module => ({ default: module.AnalysisResults })));
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -122,8 +124,15 @@ function App() {
                     transition={{ duration: 0.6 }}
                     className="space-y-6"
                   >
-                    <ScoreCard score={analysisState.result.atsScore} />
-                    <AnalysisResults result={analysisState.result} />
+                    <Suspense fallback={
+                      <div className="text-center py-8">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p className="mt-2 text-gray-600 dark:text-gray-400">Loading analysis...</p>
+                      </div>
+                    }>
+                      <ScoreCard score={analysisState.result.atsScore} />
+                      <AnalysisResults result={analysisState.result} />
+                    </Suspense>
                   </motion.div>
                 )}
               </AnimatePresence>
